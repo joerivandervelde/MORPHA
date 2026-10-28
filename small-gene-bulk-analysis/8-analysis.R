@@ -283,6 +283,11 @@ cat("Nr of haplotype relationships:",dim(haplo_link_collapse_unique_pairs)[1],"\
 cat("Nr of unique pathogenic haplotypes represented:",length(unique(haplo_link_collapse_unique_pairs$pathogenic_haplo)),"\n")
 cat("Nr of variants affecting alleles:",dim(variant_allele_collapse)[1],"\n")
 
+# percentile distr of natural haplo
+uniqnathap <- haplo_link_collapse_unique_pairs[ !duplicated(haplo_link_collapse_unique_pairs$natural_haplo), ]
+uniqnathap$n_samples <- as.integer(uniqnathap$n_samples)
+quantile(uniqnathap$n_samples)
+
 #####################################################
 # Add DG and DDG for pathogenic and base haplotypes #
 #####################################################
