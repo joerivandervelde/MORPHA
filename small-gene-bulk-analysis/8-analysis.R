@@ -427,6 +427,81 @@ get_palette_colors <- function(n, pal_spec) {
   }
 }
 
+#####################################
+# Write variant test results to CSV #
+#####################################
+variant_results_tocsv <- variant_results[order(variant_results$adj_p_value, decreasing = FALSE), ]
+variant_results_tocsv[] <- lapply(variant_results_tocsv, function(x) if(is.numeric(x)) signif(x, 3) else x)
+write.csv(variant_results_tocsv,"variant_results.csv", row.names = FALSE,quote = FALSE)
+library(dplyr)
+
+# 1. Select and format columns
+table_data <- variant_results_tocsv %>%
+  select(gene, variantID, adj_p_value, effectsize) %>%
+  mutate(
+    #adj_p_value = signif(adj_p_value, 3),
+    adj_p_value = formatC(adj_p_value, format = "e", digits = 2),
+    effectsize = round(effectsize, 2)
+  )
+
+# 2. Split into 4 equal chunks (~68 rows each)
+n <- nrow(table_data)
+chunk_size <- ceiling(n / 4)
+
+c1 <- table_data[1:chunk_size, ]
+c2 <- table_data[(chunk_size + 1):min(2 * chunk_size, n), ]
+c3 <- table_data[(2 * chunk_size + 1):min(3 * chunk_size, n), ]
+c4 <- table_data[(3 * chunk_size + 1):n, ]
+
+format_rows <- function(df) {
+  apply(df, 1, function(r) sprintf("%s & %s & %s & %s \\\\", r[1], r[2], r[3], r[4]))
+}
+
+# 3. Build 4-column LaTeX code (header only on column 1)
+latex_code <- c(
+  "\\begin{multicols*}{4}",
+  
+  # Column 1 (with header)
+  "\\begin{tabular}{llrr}",
+  "\\textbf{Gene} & \\textbf{ClinVar ID} & \\textbf{Adj.\\textit{p}-val} & \\textbf{Eff} \\\\",
+  "\\hline",
+  format_rows(c1),
+  "\\end{tabular}",
+  
+  "\\columnbreak",
+  
+  # Column 2 (no header)
+  "\\begin{tabular}{llrr}",
+  "\\textbf{Gene} & \\textbf{ClinVar ID} & \\textbf{Adj.\\textit{p}-val} & \\textbf{Eff} \\\\",
+  "\\hline",
+  format_rows(c2),
+  "\\end{tabular}",
+  
+  "\\columnbreak",
+  
+  # Column 3 (no header)
+  "\\begin{tabular}{llrr}",
+  "\\textbf{Gene} & \\textbf{ClinVar ID} & \\textbf{Adj.\\textit{p}-val} & \\textbf{Eff} \\\\",
+  "\\hline",
+  format_rows(c3),
+  "\\end{tabular}",
+  
+  "\\columnbreak",
+  
+  # Column 4 (no header)
+  "\\begin{tabular}{llrr}",
+  "\\textbf{Gene} & \\textbf{ClinVar ID} & \\textbf{Adj.\\textit{p}-val} & \\textbf{Eff} \\\\",
+  "\\hline",
+  format_rows(c4),
+  "\\end{tabular}",
+  
+  "\\end{multicols*}"
+)
+
+# Write to file
+writeLines(latex_code, "compact_variant_table.tex")
+
+
 ############################
 # Visualization of results #
 ############################
