@@ -1,0 +1,2 @@
+gene,NP_identifier,NM_identifier,AA_length,UniProt,Signal_start,Signal_end,Signal_length,status
+MEFV,NP_000234.1,NM_000243.3,781,O15553,,,,NO_SIGNAL_PEPTIDE
