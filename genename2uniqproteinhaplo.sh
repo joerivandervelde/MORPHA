@@ -150,7 +150,8 @@ expand_sv_for_gene() {
                     }
                 }
             }
-            else if ($5 ~ /^<DEL:ME:/) {
+            # Expansion & validation for all DELs
+            if ($5 == "<DEL>" || $5 ~ /^<DEL:ME:/) {
                 # Fail strictly if END is missing or invalid
                 if (!svend || svend <= $2) {
                     print "ERROR: Missing or invalid END tag for mobile element deletion: " $5 " at " $1 ":" $2 > "/dev/stderr"
@@ -179,9 +180,11 @@ expand_sv_for_gene() {
                 close(cmd)
                 print
                 next
+            }  else {
+                print "ERROR: unsupported DEL type: " $5 " " $3 " " $1 ":" $2 "-" svend > "/dev/stderr"
+                print "OFFENDING VCF RECORD:\n" $0 > "/dev/stderr"
+                exit 2
             }
-            print
-            next
         }
 
         # Handle DUP variants
