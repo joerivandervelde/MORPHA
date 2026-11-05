@@ -150,6 +150,36 @@ expand_sv_for_gene() {
                     }
                 }
             }
+            else if ($5 ~ /^<DEL:ME:/) {
+                # Fail strictly if END is missing or invalid
+                if (!svend || svend <= $2) {
+                    print "ERROR: Missing or invalid END tag for mobile element deletion: " $5 " at " $1 ":" $2 > "/dev/stderr"
+                    print "OFFENDING VCF RECORD:\n" $0 > "/dev/stderr"
+                    exit 2
+                }
+                # Cross-validate SVLEN vs (END - POS)
+                span_len = svend - $2
+                if (-svlen != span_len) {
+                    print "ERROR: SVLEN (" svlen ") conflicts with coordinate span END-POS (" span_len ") at " $1 ":" $2 "-" svend > "/dev/stderr"
+                    print "OFFENDING VCF RECORD:\n" $0 > "/dev/stderr"
+                    exit 2
+                }
+                # Fetch reference sequence spanning POS to svend
+                cmd = "samtools faidx \"" ref "\" " $1 ":" $2 "-" svend " | grep -v \">\" | tr -d \"\n\""
+                del_seq = ""
+                if ((cmd | getline del_seq) > 0 && length(del_seq) > 0) {
+                    anchor = substr(del_seq, 1, 1)
+                    $4 = del_seq
+                    $5 = anchor
+                } else {
+                    print "ERROR: Failed to fetch sequence for deletion " $1 ":" $2 "-" svend > "/dev/stderr"
+                    close(cmd)
+                    exit 1
+                }
+                close(cmd)
+                print
+                next
+            }
             print
             next
         }
