@@ -15,7 +15,7 @@ setwd(dirname(script_dir))
 #######################################################
 # Read in the protein haplotypes for 1kGP individuals #
 #######################################################
-haplo_path <- "results/MEFV/MEFV_protein_haplotypes.fa"
+haplo_path <- paste0("results/",gene_name,"/",gene_name,"_protein_haplotypes.fa")
 fasta_lines <- readLines(haplo_path, warn = FALSE)
 header_idx <- grep("^>", fasta_lines)
 
@@ -180,7 +180,7 @@ p <- ggplot(long_all, aes(x = pair_id, y = count, fill = superpop)) +
   scale_x_discrete(labels = axis_labels_map, guide = guide_axis(check.overlap = TRUE)) +
   coord_cartesian(clip = "off") +
   labs(
-    title = "Sample and superpopulation distribution of MEFV haplotypes in 1kGP",
+    title = paste0("Sample and superpopulation distribution of ",gene_name," haplotypes in 1kGP"),
     x = "Natural protein haplotypes from 1kGP with total sample counts in italics",
     y = "Relative 1kGP superpopulation breakdown per natural haplotype",
     fill = "Superpopulation"
@@ -198,7 +198,7 @@ p <- ggplot(long_all, aes(x = pair_id, y = count, fill = superpop)) +
     axis.title.y = element_text(size = 16),
     panel.grid = element_blank(),
   )
-ggsave(filename = "superpopulation_breakdown.png", plot = p, width = 500, height = 200, units = "mm", dpi = 300, limitsize = FALSE)
+ggsave(filename = paste0(gene_name,"_superpopulation_breakdown.png"), plot = p, width = 500, height = 200, units = "mm", dpi = 300, limitsize = FALSE)
 
 
 #########
@@ -290,7 +290,7 @@ p <- ggplot(long_all, aes(x = pair_id, y = count, fill = pop)) +
   scale_x_discrete(labels = axis_labels_map, guide = guide_axis(check.overlap = TRUE)) +
   coord_cartesian(clip = "off") +
   labs(
-    title = "Sample and population distribution of MEFV haplotypes in 1kGP",
+    title = paste0("Sample and population distribution of ",gene_name," haplotypes in 1kGP"),
     x = "Natural protein haplotypes from 1kGP with total sample counts in italics",
     y = "Relative 1kGP population breakdown per natural haplotype",
     fill = "Population"
@@ -309,4 +309,4 @@ p <- ggplot(long_all, aes(x = pair_id, y = count, fill = pop)) +
     panel.grid = element_blank(),
   )
 
-ggsave(filename = "population_breakdown.png", plot = p, width = 500, height = 200, units = "mm", dpi = 300)
+ggsave(filename = paste0(gene_name,"_population_breakdown.png"), plot = p, width = 500, height = 200, units = "mm", dpi = 300)
