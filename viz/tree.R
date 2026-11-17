@@ -12,7 +12,6 @@ setwd("~/git/MORPHA/")
 
 fasta_file <- paste0("results/", gene, "/", gene, "_protein_haplotypes.fa")
 metadata_file <- paste0("viz/igsr_samples.tsv")
-exclude_samples <- "HG01783"
 
 count_string <- function(x) {
   x <- x[!is.na(x) & x != ""]
@@ -62,9 +61,21 @@ ann <- header_tbl %>%
   select(label, samples) %>%
   separate_rows(samples, sep = ",") %>%
   rename(sample_haplotype = samples) %>%
-  mutate(sample_id = sub("\\.h[0-9]+$", "", sample_haplotype)) %>%
-  filter(!sample_id %in% exclude_samples) %>%
+  mutate(
+    sample_id = sub("\\.h[0-9]+$", "", sample_haplotype),
+    sample_id = trimws(sample_id)
+  ) %>%
   left_join(metadata, by = c("sample_id" = "Sample name")) %>%
+  mutate(
+    `Superpopulation code` = case_when(
+      sample_id == "HG01783" ~ "Mix",
+      TRUE ~ `Superpopulation code`
+    ),
+    `Population code` = case_when(
+      sample_id == "HG01783" ~ "IBS+MSL", 
+      TRUE ~ `Population code`
+    )
+  ) %>%
   group_by(label) %>%
   summarise(
     n_haplotypes_after_exclusion = n(),
@@ -88,8 +99,7 @@ ann <- header_tbl %>%
     )
   )
 
-write.table(ann, paste0(gene,"_protein_tree_tip_annotations.tsv"),
-            sep = "\t", quote = FALSE, row.names = FALSE)
+#write.table(ann, paste0(gene,"_protein_tree_tip_annotations.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Align with MAFFT if lengths differ; phangorn expects aligned AA characters
 if (length(unique(nchar(seqs))) > 1) {
@@ -120,8 +130,8 @@ tree$edge.length[tree$edge.length < 0] <- 0 # set neg to 0
 #tree <- upgma(d) %>% ladderize()
 #write.tree(tree, paste0(gene,"_protein_tree.nwk"))
 
-superpop_cols <- c(AFR = "#E41A1C", AMR = "#377EB8", EAS = "#4DAF4A",
-                   EUR = "#984EA3", SAS = "#FF7F00", unknown = "grey50")
+superpop_cols <- c(AFR = "#d55e00", AMR = "#f0e442", EAS = "#009e73",
+                   EUR = "#0072b2", SAS = "#cc79a7", Mix= "grey30")
 
 
 # used for scaling
@@ -151,10 +161,10 @@ p <- ggtree(tree) %<+% ann +
     fill   = guide_legend(override.aes = list(size = 5))
   ) +
   labs(title = paste0(gene, " protein haplotype tree across global ancestries"),
-       subtitle = paste0("Based on maximum-likelihood amino-acid evolutionary distance under the JTT substitution model on all ",length(seqs)," unique ", gene ," protein haplotypes present in 6,402 haplotypes from 3,201 individuals in the 1000 Genomes Project"),
+       subtitle = paste0("Based on maximum-likelihood amino-acid evolutionary distance under the JTT substitution model on all ",length(seqs)," unique ", gene ," protein haplotypes present in 6,404 haplotypes from 3,202 individuals in the 1000 Genomes Project"),
        x = "Branch length (JTT amino-acid substitutions per site)",
        color = "Dominant\nsuperpopulation")
 p
-#ggsave(paste0(gene,"_protein_tree_dendrogram.pdf"), p, width = 16, height = 12, limitsize = FALSE)
-ggsave(paste0(gene,"_protein_tree_dendrogram.png"), p, width = 16, height = length(tree$tip.label)/7, dpi = 300, limitsize = FALSE)
+#ggsave(paste0(gene,"_protein_haplo_tree.pdf"), p, width = 16, height = 12, limitsize = FALSE)
+ggsave(paste0(gene,"_protein_haplo_tree.png"), p, width = 16, height = length(tree$tip.label)/7, dpi = 300, limitsize = FALSE)
 
