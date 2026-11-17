@@ -87,7 +87,7 @@ ann <- header_tbl %>%
     )
   )
 
-write.table(ann, "MEFV_protein_tree_tip_annotations.tsv",
+write.table(ann, paste0(gene,"_protein_tree_tip_annotations.tsv"),
             sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Align with MAFFT if lengths differ; phangorn expects aligned AA characters
@@ -117,20 +117,20 @@ tree$edge.length[tree$edge.length < 0] <- 0 # set neg to 0
 #aa <- phyDat(aa_matrix, type = "AA")
 #d <- dist.ml(aa, model = "JTT", exclude = "pairwise")
 #tree <- upgma(d) %>% ladderize()
-#write.tree(tree, "MEFV_protein_tree.nwk")
+#write.tree(tree, paste0(gene,"_protein_tree.nwk"))
 
 superpop_cols <- c(AFR = "#E41A1C", AMR = "#377EB8", EAS = "#4DAF4A",
                    EUR = "#984EA3", SAS = "#FF7F00", unknown = "grey50")
 
 
-
+max_depth <- max(node.depth.edgelength(tree))
 
 p <- ggtree(tree) %<+% ann +
   geom_tippoint(aes(color = superpopulation), size = 2.2) +
   geom_tiplab(aes(label = tip_label, color = superpopulation),
               size = 4, align = TRUE, linetype = "dotted", linesize = 0.2, show.legend = FALSE) +
   scale_color_manual(values = superpop_cols, na.value = "grey50") +
-  xlim(0,0.007)+
+  xlim(0,max_depth*1.5)+
   theme_tree2() +
   theme(
     plot.title = element_text(size = 24, color = "black"),
@@ -142,11 +142,11 @@ p <- ggtree(tree) %<+% ann +
     colour = guide_legend(override.aes = list(size = 5)),
     fill   = guide_legend(override.aes = list(size = 5))
   ) +
-  labs(title = "MEFV protein haplotype tree across global ancestries",
-       subtitle = "Based on maximum-likelihood amino-acid evolutionary distance under the JTT substitution model on all 57 unique MEFV protein haplotypes present in 6,402 haplotypes from 3,201 individuals in the 1000 Genomes Project",
+  labs(title = paste0(gene, " protein haplotype tree across global ancestries"),
+       subtitle = paste0("Based on maximum-likelihood amino-acid evolutionary distance under the JTT substitution model on all 57 unique ", gene ," protein haplotypes present in 6,402 haplotypes from 3,201 individuals in the 1000 Genomes Project"),
        x = "Branch length (JTT amino-acid substitutions per site)",
        color = "Dominant\nsuperpopulation")
 p
-#ggsave("MEFV_protein_tree_dendrogram.pdf", p, width = 16, height = 12, limitsize = FALSE)
-ggsave("MEFV_protein_tree_dendrogram.png", p, width = 16, height = 12, dpi = 300, limitsize = FALSE)
+#ggsave(paste0(gene,"_protein_tree_dendrogram.pdf"), p, width = 16, height = 12, limitsize = FALSE)
+ggsave(paste0(gene,"_protein_tree_dendrogram.png"), p, width = 16, height = 12, dpi = 300, limitsize = FALSE)
 
