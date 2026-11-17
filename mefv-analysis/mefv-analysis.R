@@ -198,7 +198,7 @@ p <- ggplot(long_all, aes(x = pair_id, y = count, fill = superpop)) +
     axis.title.y = element_text(size = 16),
     panel.grid = element_blank(),
   )
-ggsave(filename = paste0(gene_name,"_superpopulation_breakdown.png"), plot = p, width = 500, height = 200, units = "mm", dpi = 300, limitsize = FALSE)
+ggsave(filename = paste0(gene_name,"_superpopulation_breakdown.png"), plot = p, width =  dim(all_haplotypes)[1]*10, height = 200, units = "mm", dpi = 300, limitsize = FALSE)
 
 
 #########
@@ -309,4 +309,4 @@ p <- ggplot(long_all, aes(x = pair_id, y = count, fill = pop)) +
     panel.grid = element_blank(),
   )
 
-ggsave(filename = paste0(gene_name,"_population_breakdown.png"), plot = p, width = 500, height = 200, units = "mm", dpi = 300)
+ggsave(filename = paste0(gene_name,"_population_breakdown.png"), plot = p, width =  dim(all_haplotypes)[1]*10, height = 200, units = "mm", dpi = 300)
