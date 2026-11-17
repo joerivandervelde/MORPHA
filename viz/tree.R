@@ -6,7 +6,8 @@ library(phangorn)
 library(ggtree)
 library(ape)
 
-gene <- "MEFV"
+gene <- "COL7A1"
+hg38_var <- "COL7A1_protein_variant_3"
 setwd("~/git/MORPHA/")
 
 fasta_file <- paste0("results/", gene, "/", gene, "_protein_haplotypes.fa")
@@ -123,12 +124,19 @@ superpop_cols <- c(AFR = "#E41A1C", AMR = "#377EB8", EAS = "#4DAF4A",
                    EUR = "#984EA3", SAS = "#FF7F00", unknown = "grey50")
 
 
+# used for scaling
 max_depth <- max(node.depth.edgelength(tree))
 
+# indicator column to your annotation table before plotting
+ann <- ann %>% mutate(hg38 = (label == hg38_var))
+
 p <- ggtree(tree) %<+% ann +
-  geom_tippoint(aes(color = superpopulation), size = 2.2) +
-  geom_tiplab(aes(label = tip_label, color = superpopulation),
-              size = 4, align = TRUE, linetype = "dotted", linesize = 0.2, show.legend = FALSE) +
+  geom_tippoint(aes(color = superpopulation, size = hg38)) +
+  scale_size_manual(values = c(`TRUE` = 4, `FALSE` = 2.2)) + # Make target point larger
+  geom_tiplab(aes(label = tip_label, 
+                  color = superpopulation, 
+                  fontface = ifelse(hg38, "bold", "plain")), # Bold the target row text
+              size = 3, align = TRUE, linetype = "dotted", linesize = 0.2, show.legend = FALSE) +
   scale_color_manual(values = superpop_cols, na.value = "grey50") +
   xlim(0,max_depth*1.5)+
   theme_tree2() +
@@ -143,10 +151,10 @@ p <- ggtree(tree) %<+% ann +
     fill   = guide_legend(override.aes = list(size = 5))
   ) +
   labs(title = paste0(gene, " protein haplotype tree across global ancestries"),
-       subtitle = paste0("Based on maximum-likelihood amino-acid evolutionary distance under the JTT substitution model on all 57 unique ", gene ," protein haplotypes present in 6,402 haplotypes from 3,201 individuals in the 1000 Genomes Project"),
+       subtitle = paste0("Based on maximum-likelihood amino-acid evolutionary distance under the JTT substitution model on all ",length(seqs)," unique ", gene ," protein haplotypes present in 6,402 haplotypes from 3,201 individuals in the 1000 Genomes Project"),
        x = "Branch length (JTT amino-acid substitutions per site)",
        color = "Dominant\nsuperpopulation")
 p
 #ggsave(paste0(gene,"_protein_tree_dendrogram.pdf"), p, width = 16, height = 12, limitsize = FALSE)
-ggsave(paste0(gene,"_protein_tree_dendrogram.png"), p, width = 16, height = 12, dpi = 300, limitsize = FALSE)
+ggsave(paste0(gene,"_protein_tree_dendrogram.png"), p, width = 16, height = length(tree$tip.label)/7, dpi = 300, limitsize = FALSE)
 
