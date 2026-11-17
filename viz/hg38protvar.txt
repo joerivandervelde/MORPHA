@@ -1,0 +1,3 @@
+MEFV	MEFV_protein_variant_2
+DMD	DMD_protein_variant_2
+COL7A1	COL7A1_protein_variant_3
