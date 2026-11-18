@@ -6,8 +6,8 @@ library(phangorn)
 library(ggtree)
 library(ape)
 
-gene <- "COL7A1"
-hg38_var <- "COL7A1_protein_variant_3"
+gene <- "MLH1"
+hg38_var <- "MLH1_protein_variant_2"
 setwd("~/git/MORPHA/")
 
 fasta_file <- paste0("results/", gene, "/", gene, "_protein_haplotypes.fa")
@@ -165,6 +165,6 @@ p <- ggtree(tree) %<+% ann +
        x = "Branch length (JTT amino-acid substitutions per site)",
        color = "Dominant\nsuperpopulation")
 p
-#ggsave(paste0(gene,"_protein_haplo_tree.pdf"), p, width = 16, height = 12, limitsize = FALSE)
-ggsave(paste0(gene,"_protein_haplo_tree.png"), p, width = 16, height = length(tree$tip.label)/7, dpi = 300, limitsize = FALSE)
+ggsave(paste0(gene,"_protein_haplo_tree.pdf"), p, width = 16, height = max(6, length(tree$tip.label)/7), limitsize = FALSE)
+ggsave(paste0(gene,"_protein_haplo_tree.png"), p, width = 16, height = max(6, length(tree$tip.label)/7), dpi = 300, limitsize = FALSE)
 
