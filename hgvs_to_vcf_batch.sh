@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # run and sort output:
-# ./hgvs_to_vcf_batch.sh variants.csv 1 | bcftools sort -Ov -o sorted.vcf
+# ./hgvs_to_vcf_batch.sh variants.csv 1 | bcftools sort -Ov -o variants.vcf
 
 if [ "$#" -lt 1 ]; then
     echo "Usage: $0 <input.csv> [hgvs_column_1_based]" >&2

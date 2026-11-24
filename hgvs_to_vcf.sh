@@ -345,13 +345,14 @@ for hgvs in "$@"; do
         END { if (!found) exit 1 }'
     }
 
+    # Parse coding or intronic SNV: c.123A>G, c.817-1G>T, c.1150+1G>A, c.*14A>G
     if [[ "${change}" =~ ^c\.(\*[0-9]+|[0-9]+)([+-][0-9]+)?([ACGT])\>([ACGT])$ ]]; then
         p1="${BASH_REMATCH[1]}"
         off1="${BASH_REMATCH[2]:-0}"
         ref_c="${BASH_REMATCH[3]}"
         alt_c="${BASH_REMATCH[4]}"
 
-        g1=$(c_pt_to_g "$p1" "$off1")
+        g1=$(c_pt_to_g "$p1" "$off1") || { echo "Error: Coordinate out of range for ${hgvs}" >&2; exit 1; }
         chrom="${g1%%:*}"
         pos="${g1#*:}"
 
@@ -363,7 +364,17 @@ for hgvs in "$@"; do
             alt_g="$alt_c"
         fi
 
-        printf "%s\t%s\t%s\t%s\t%s\t.\tPASS\t.\n" "$chrom" "$pos" "$out_id" "$ref_g" "$alt_g" >> "${RAW_VCF}"
+        fa_ref=$(fa_slice "$chrom" "$pos" "$pos")
+        if [ -z "${fa_ref}" ]; then
+            echo "Error: Empty reference base at ${chrom}:${pos} for ${hgvs}" >&2
+            exit 1
+        fi
+        if [ "${fa_ref}" != "${ref_g}" ]; then
+            echo "Error: Reference mismatch at ${chrom}:${pos} for ${hgvs} (expected ${ref_g} from ${tx} strand ${strand}, got ${fa_ref} in FASTA)" >&2
+            exit 1
+        fi
+
+        printf "%s\t%s\t%s\t%s\t%s\t.\tPASS\t.\n" "$chrom" "$pos" "$out_id" "$fa_ref" "$alt_g" >> "${RAW_VCF}"
 
     elif [[ "${change}" =~ ^c\.(\*[0-9]+|[0-9]+)([+-][0-9]+)?(_(\*[0-9]+|[0-9]+)([+-][0-9]+)?)?dup\[?[ACGT]*\]?$ ]]; then
         p1="${BASH_REMATCH[1]}"
@@ -371,8 +382,8 @@ for hgvs in "$@"; do
         p2="${BASH_REMATCH[4]:-$p1}"
         off2="${BASH_REMATCH[5]:-$off1}"
 
-        g1_str=$(c_pt_to_g "$p1" "$off1")
-        g2_str=$(c_pt_to_g "$p2" "$off2")
+        g1_str=$(c_pt_to_g "$p1" "$off1") || { echo "Error: Start coordinate out of range in ${hgvs}" >&2; exit 1; }
+        g2_str=$(c_pt_to_g "$p2" "$off2") || { echo "Error: End coordinate out of range in ${hgvs}" >&2; exit 1; }
         chrom="${g1_str%%:*}"
         g1="${g1_str#*:}"
         g2="${g2_str#*:}"
@@ -394,8 +405,8 @@ for hgvs in "$@"; do
         p2="${BASH_REMATCH[4]:-$p1}"
         off2="${BASH_REMATCH[5]:-$off1}"
 
-        g1_str=$(c_pt_to_g "$p1" "$off1")
-        g2_str=$(c_pt_to_g "$p2" "$off2")
+        g1_str=$(c_pt_to_g "$p1" "$off1") || { echo "Error: Start coordinate out of range in ${hgvs}" >&2; exit 1; }
+        g2_str=$(c_pt_to_g "$p2" "$off2") || { echo "Error: End coordinate out of range in ${hgvs}" >&2; exit 1; }
         chrom="${g1_str%%:*}"
         g1="${g1_str#*:}"
         g2="${g2_str#*:}"
@@ -418,8 +429,8 @@ for hgvs in "$@"; do
         off2="${BASH_REMATCH[4]:-0}"
         ins_c="${BASH_REMATCH[5]}"
 
-        g1_str=$(c_pt_to_g "$p1" "$off1")
-        g2_str=$(c_pt_to_g "$p2" "$off2")
+        g1_str=$(c_pt_to_g "$p1" "$off1") || { echo "Error: Start coordinate out of range in ${hgvs}" >&2; exit 1; }
+        g2_str=$(c_pt_to_g "$p2" "$off2") || { echo "Error: End coordinate out of range in ${hgvs}" >&2; exit 1; }
         chrom="${g1_str%%:*}"
         g1="${g1_str#*:}"
         g2="${g2_str#*:}"
@@ -443,4 +454,4 @@ for hgvs in "$@"; do
     fi
 done
 
-bcftools sort "${RAW_VCF}" 2>/dev/null | bcftools norm -f "${FA_PATH}" -c w --no-version -Ov 2>/dev/null | grep -v '^#'
+bcftools sort "${RAW_VCF}" | bcftools norm -f "${FA_PATH}" -c w --no-version -Ov | { grep -v '^#' || true; }
